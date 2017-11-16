@@ -8,7 +8,7 @@ import java.util.LinkedList;
 
 /**
  * An trie data structure that implements the Dictionary and the AutoComplete ADT
- * @author Owolabi Tobiloba
+ * @author You
  *
  */
 public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
@@ -37,24 +37,23 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
 	 * @return true if the word was successfully added or false if it already exists
 	 * in the dictionary.
 	 */
-
-    public boolean search(String word)
-    {
-        TrieNode current = root;
-        for (char ch : word.toCharArray() )
-        {
-            if (current.subNode(ch) == null)
-                return false;
-            else
-                current = current.subNode(ch);
-        }
-        if (current.isEnd == true)
-            return true;
-        return false;
-    }
 	public boolean addWord(String word){
 		word = word.toLowerCase();
-
+		TrieNode node = root;
+		for (int i = 0; i < word.length(); i++) {
+			char c = word.charAt(i);
+			if (node.getValidNextCharacters().contains(c)) {
+				node = node.getChild(c);
+			} else {
+				node = node.insert(c);
+			}
+		}
+		if (!node.endsWord()) {
+			node.setEndsWord(true);
+			size++;
+			return true;
+		}
+	    return false;
 	}
 
 	/**
@@ -69,9 +68,20 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
 	/** Returns whether the string is a word in the trie, using the algorithm
 	 * described in the videos for this week. */
 	@Override
-	public boolean isWord(String s)
-	{
-	    // TODO: Implement this method
+	public boolean isWord(String s)	{
+	    s = s.toLowerCase();
+	    TrieNode node = root;
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			if (node.getValidNextCharacters().contains(c)) {
+				node = node.getChild(c);
+			} else {
+				return false;
+			}
+		}
+		if (node.endsWord()) {
+			return true;
+		}
 		return false;
 	}
 
@@ -113,7 +123,44 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
     	 //       Add all of its child nodes to the back of the queue
     	 // Return the list of completions
 
-         return null;
+    	 String prefixToCheck = prefix.toLowerCase();
+    	 List<String> result = new LinkedList<String>();
+    	 TrieNode node = root;
+    	 for (int i = 0; i < prefixToCheck.length(); i++) {
+    		 char c = prefixToCheck.charAt(i);
+    		 if (node.getValidNextCharacters().contains(c)) {
+ 				node = node.getChild(c);
+ 			} else {
+ 				return result;
+ 			}
+    	 }
+    	 int count = 0;
+    	 if (node.endsWord()) {
+    		 result.add(node.getText());
+    		 count++;
+    	 }
+
+    	 List<TrieNode> nodeQueue = new LinkedList<TrieNode>();
+    	 List<Character> childrenC = new LinkedList<Character>(node.getValidNextCharacters());
+
+    	 for (int i = 0; i < childrenC.size(); i++) {
+    		 char c = childrenC.get(i);
+    		 nodeQueue.add(node.getChild(c));
+    	 }
+    	 while (!nodeQueue.isEmpty() && count < numCompletions) {
+    		 TrieNode tn = nodeQueue.remove(0);
+    		 if (tn.endsWord()) {
+    			 result.add(tn.getText());
+    			 count++;
+    		 }
+
+    		 List<Character> cs = new LinkedList<Character>(tn.getValidNextCharacters());
+        	 for (int i = 0; i < cs.size(); i++) {
+        		 char c = cs.get(i);
+        		 nodeQueue.add(tn.getChild(c));
+        	 }
+    	 }
+         return result;
      }
 
  	// For debugging
